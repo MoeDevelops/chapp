@@ -3,8 +3,8 @@ import gleam/erlang/process.{type Selector}
 import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/io
-import gleam/option.{type Option}
-import gleam/otp/actor.{type Next}
+import gleam/option.{type Option, None}
+import gleam/otp/actor.{type Next, Continue}
 import mist.{
   type Connection, type ResponseData, type WebsocketConnection,
   type WebsocketMessage,
@@ -38,13 +38,12 @@ pub fn main() {
 fn on_init(
   connection: WebsocketConnection,
 ) -> #(String, Option(Selector(String))) {
-  io.debug(connection)
-  todo
+  #("Hello", None)
 }
 
-fn on_close(a: String) -> Nil {
-  io.debug(a)
-  todo
+fn on_close(state: String) -> Nil {
+  io.debug(state)
+  Nil
 }
 
 fn handle_ws_message(
@@ -55,5 +54,5 @@ fn handle_ws_message(
   io.debug(state)
   io.debug(connection)
   io.debug(message)
-  todo
+  Continue(state, None)
 }
