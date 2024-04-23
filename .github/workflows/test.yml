@@ -3,8 +3,8 @@ name: test
 on:
   push:
     branches:
-      - master
       - main
+      - development
   pull_request:
 
 jobs:
