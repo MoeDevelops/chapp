@@ -6,6 +6,7 @@ import gleam/io
 import gleam/option.{type Option, None}
 import gleam/otp/actor.{type Next, Continue}
 import gleam/pgo.{type Connection as DbConnection}
+import gleam/result
 import mist.{
   type Connection, type ResponseData, type WebsocketConnection,
   type WebsocketMessage,
@@ -16,22 +17,41 @@ pub type Context {
   Context(db: DbConnection)
 }
 
-pub fn create_handler(
+pub fn create_handler() -> Result(
+  fn(HttpRequest(Connection)) -> HttpResponse(ResponseData),
+  Nil,
+) {
+  use connection <- result.try(database.create_connection("chapp"))
+  let ctx = Context(connection)
+
+  Ok(fn(req: HttpRequest(Connection)) { handle_request(req, ctx) })
+}
+
+fn handle_request(
   req: HttpRequest(Connection),
+  ctx: Context,
 ) -> HttpResponse(ResponseData) {
-  let ctx = Context(database.create_connection("chapp"))
   case request.path_segments(req) {
     ["ws"] -> {
-      mist.websocket(req, handle_ws_message, on_init, on_close)
+      handle_websocket(req, ctx)
     }
     _ -> {
       let secret_key_base = wisp.random_string(64)
-      wisp.mist_handler(fn(x) { handle_request(x, ctx) }, secret_key_base)(req)
+      wisp.mist_handler(fn(x) { handle_http_request(x, ctx) }, secret_key_base)(
+        req,
+      )
     }
   }
 }
 
-pub fn handle_request(req: Request, ctx: Context) -> Response {
+fn handle_websocket(
+  req: HttpRequest(Connection),
+  ctx: Context,
+) -> HttpResponse(ResponseData) {
+  mist.websocket(req, handle_ws_message, on_init, on_close)
+}
+
+fn handle_http_request(req: Request, ctx: Context) -> Response {
   case wisp.path_segments(req) {
     _ -> wisp.not_found()
   }

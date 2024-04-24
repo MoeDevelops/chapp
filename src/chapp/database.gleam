@@ -1,16 +1,32 @@
 import birl
+import chapp/config
 import gleam/dynamic
+import gleam/io
+import gleam/option.{Some}
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 
-pub fn create_connection(database: String) -> DbConnection {
-  pgo.Config(
-    ..pgo.default_config(),
-    host: "localhost",
-    database: database,
-    pool_size: 15,
-  )
-  |> pgo.connect()
+pub fn create_connection(database: String) -> Result(DbConnection, Nil) {
+  io.println("Trying to load db config")
+  use conf <- result.try(config.get_db_settings())
+  io.println("Loaded db config")
+
+  io.println("Trying to connect to db")
+  let connection =
+    pgo.Config(
+      ..pgo.default_config(),
+      database: database,
+      host: conf.host,
+      port: conf.port,
+      ssl: conf.ssl,
+      user: conf.user,
+      password: Some(conf.password),
+      pool_size: 15,
+    )
+    |> pgo.connect()
+  io.println("Connected to db")
+
+  Ok(connection)
 }
 
 pub fn create_tables(connection: DbConnection) -> Bool {

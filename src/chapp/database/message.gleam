@@ -51,3 +51,7 @@ const create_message_sql = "
 insert into
 messages (id, author, recipient, message_content, creation_timestamp)
 values ($1, $2, $3, $4, $5)"
+
+const get_messages_sql = "
+
+"
