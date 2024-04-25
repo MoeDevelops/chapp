@@ -10,8 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container:
-      image: exercism/gleam-test-runner:latest
+    container: alpine:edge
 
     services:
       postgres:
@@ -24,14 +23,24 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         env:
-          POSTGRES_PASSWORD: example
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: chapp_test
 
     steps:
       - uses: actions/checkout@v4
+      - name: Install packages
+        run: apk add gleam rebar3
       - name: Install dependencies
         run: gleam deps download
       - name: Run unit tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_SSL: False
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_IP_VERSION: IPv4
         run: gleam test
       - name: Check format
         run: gleam format --check src test

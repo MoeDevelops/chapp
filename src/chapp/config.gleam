@@ -16,12 +16,12 @@ pub type DbSettings {
 
 pub fn get_db_settings() {
   let _ = dotenv.load()
-  use host <- result.try(env.get_string("HOST"))
-  use port <- result.try(env.get_int("PORT"))
-  use ssl <- result.try(env.get_bool("SSL"))
-  use user <- result.try(env.get_string("USER"))
-  use password <- result.try(env.get_string("PASSWORD"))
-  use ipversion <- result.try(env.get("IP_VERSION", parse_ip_version))
+  use host <- result.try(env.get_string("DB_HOST"))
+  use port <- result.try(env.get_int("DB_PORT"))
+  use ssl <- result.try(env.get_bool("DB_SSL"))
+  use user <- result.try(env.get_string("DB_USER"))
+  use password <- result.try(env.get_string("DB_PASSWORD"))
+  use ipversion <- result.try(env.get("DB_IP_VERSION", parse_ip_version))
 
   Ok(DbSettings(host, port, ssl, user, password, ipversion))
 }

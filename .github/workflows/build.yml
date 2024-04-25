@@ -10,14 +10,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container: alpine:edge
+
     steps:
       - uses: actions/checkout@v4
-      - uses: erlef/setup-beam@v1.17.5
-        with:
-          otp-version: "26.0.2"
-          gleam-version: "1.0.0"
-          rebar3-version: "3"
-      - run: gleam deps download
-      - run: gleam build
-      - run: gleam export erlang-shipment
-      - run: docker build . -t chapp
+      - name: Install packages
+        run: apk add gleam rebar3
+      - name: Install dependencies
+        run: gleam deps download
+      - name: Build for erlang shipment
+        run: gleam export erlang-shipment
+      - name: Build docker container
+        run: docker build . -t chapp
