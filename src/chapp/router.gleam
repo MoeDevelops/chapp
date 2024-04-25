@@ -46,19 +46,19 @@ fn handle_request(
 
 fn handle_websocket(
   req: HttpRequest(Connection),
-  ctx: Context,
+  _ctx: Context,
 ) -> HttpResponse(ResponseData) {
   mist.websocket(req, handle_ws_message, on_init, on_close)
 }
 
-fn handle_http_request(req: Request, ctx: Context) -> Response {
+fn handle_http_request(req: Request, _ctx: Context) -> Response {
   case wisp.path_segments(req) {
     _ -> wisp.not_found()
   }
 }
 
 fn on_init(
-  connection: WebsocketConnection,
+  _connection: WebsocketConnection,
 ) -> #(String, Option(Selector(String))) {
   #("Hello", None)
 }

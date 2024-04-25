@@ -11,12 +11,14 @@ pub fn create_user(
   username: String,
   password: String,
 ) -> Option(TokenPair) {
-  let salt = crypto.strong_random_bytes(256)
+  let salt = crypto.strong_random_bytes(64)
+
   let pw_and_salt =
     bit_array.from_string(password)
     |> bit_array.append(salt)
 
   let pw_hashed = crypto.hash(Sha512, pw_and_salt)
+
   let db_result =
     create_user_sql
     |> pgo.execute(
@@ -32,7 +34,10 @@ pub fn create_user(
 
   case db_result {
     Ok(_) -> Some(token.create_token_pair(connection, username))
-    Error(_) -> None
+    Error(err) -> {
+      database.log_error(err)
+      None
+    }
   }
 }
 
@@ -56,4 +61,10 @@ const create_user_sql = "
 insert into 
 users (username, password, salt, creation_timestamp) 
 values ($1, $2, $3, $4);
+"
+
+const get_user_sql = "
+select username, salt, creation_timestamp
+from users
+where username = $1; 
 "
