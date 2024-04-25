@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install packages
-        run: apk add gleam rebar3
+        run: apk add gleam rebar3 docker
       - name: Install dependencies
         run: gleam deps download
       - name: Build for erlang shipment
