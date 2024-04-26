@@ -3,7 +3,6 @@ import gleam/bit_array
 import gleam/bytes_builder
 import gleam/dynamic
 import gleam/list
-import gleam/option.{type Option, None, Some}
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import gleam/string
@@ -48,7 +47,7 @@ pub fn verify_token(connection: DbConnection, token_pair: TokenPair) -> Bool {
 pub fn get_user_by_token(
   connection: DbConnection,
   token: String,
-) -> Option(String) {
+) -> Result(String, Nil) {
   let token_binary =
     token
     |> string.replace("-", "")
@@ -67,14 +66,10 @@ pub fn get_user_by_token(
       dynamic.element(0, dynamic.string),
     )
   {
-    Ok(db_result) ->
-      case list.first(db_result.rows) {
-        Ok(val) -> Some(val)
-        _ -> None
-      }
+    Ok(db_result) -> list.first(db_result.rows)
     Error(err) -> {
       database.log_error(err)
-      None
+      Error(Nil)
     }
   }
 }

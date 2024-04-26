@@ -24,7 +24,7 @@ pub fn create_connection(path: Option(String)) -> Result(DbConnection, Nil) {
       ssl: conf.ssl,
       user: conf.user,
       password: Some(conf.password),
-      pool_size: 15,
+      pool_size: 1,
     )
     |> pgo.connect()
 
@@ -41,7 +41,7 @@ pub fn create_tables(connection: DbConnection) -> Bool {
   }
 }
 
-fn manage_create_tables(connection: DbConnection) {
+fn manage_create_tables(connection: DbConnection) -> Result(Nil, QueryError) {
   use _ <- result.try(create_table_users(connection))
   use _ <- result.try(create_table_messages(connection))
   use _ <- result.try(create_table_tokens(connection))
@@ -111,22 +111,22 @@ pub fn get_timestamp() -> Int {
 
 const create_table_users_sql = "
 create table if not exists users 
-(username varchar(32) primary key, password char(256),
-salt char(128), creation_timestamp bigint);
+(username varchar(32) primary key, password bytea,
+salt bytea, creation_timestamp bigint);
 "
 
 const create_table_messages_sql = "
 create table if not exists messages
 (id uuid primary key, 
-author varchar(32) references Users(username),
-recipient varchar(32) references Users(username), 
+author varchar(32) references Users(username) ON DELETE CASCADE,
+recipient varchar(32) references Users(username) ON DELETE CASCADE, 
 message_content varchar(1000), creation_timestamp bigint);
 "
 
 const create_table_tokens_sql = "
 create table if not exists tokens
 (token uuid primary key,
-username varchar(32) references users(username),
+username varchar(32) references users(username) ON DELETE CASCADE,
 creation_timestamp bigint);
 "
 
