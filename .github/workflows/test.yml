@@ -15,7 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install packages
-        run: apk add gleam rebar3 postgresql16
+        run: apk add --no-cache gleam rebar3 docker
+      - name: Start postgresql docker container
+        run: docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=chapp_test postgres
       - name: Install dependencies
         run: gleam deps download
       - name: Run unit tests
