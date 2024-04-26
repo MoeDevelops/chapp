@@ -42,25 +42,11 @@ pub fn create_tables(connection: DbConnection) -> Bool {
 }
 
 fn manage_create_tables(connection: DbConnection) -> Result(Nil, QueryError) {
-  use _ <- result.try(create_table_users(connection))
-  use _ <- result.try(create_table_messages(connection))
-  use _ <- result.try(create_table_tokens(connection))
+  let r = dynamic.dynamic
+  use _ <- result.try(pgo.execute(create_table_users_sql, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_messages_sql, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_tokens_sql, connection, [], r))
   Ok(Nil)
-}
-
-fn create_table_users(connection: DbConnection) {
-  create_table_users_sql
-  |> pgo.execute(connection, [], dynamic.dynamic)
-}
-
-fn create_table_messages(connection: DbConnection) {
-  create_table_messages_sql
-  |> pgo.execute(connection, [], dynamic.dynamic)
-}
-
-fn create_table_tokens(connection: DbConnection) {
-  create_table_tokens_sql
-  |> pgo.execute(connection, [], dynamic.dynamic)
 }
 
 pub fn drop_tables(connection: DbConnection) -> Bool {
