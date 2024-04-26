@@ -1,3 +1,4 @@
+import gleam/option.{type Option, Some}
 import gleam/pgo.{type IpVersion, Ipv4, Ipv6}
 import gleam/result
 import glenvy/dotenv
@@ -5,6 +6,7 @@ import glenvy/env
 
 pub type DbSettings {
   DbSettings(
+    db_name: String,
     host: String,
     port: Int,
     ssl: Bool,
@@ -14,16 +16,41 @@ pub type DbSettings {
   )
 }
 
-pub fn get_db_settings() {
-  let _ = dotenv.load()
-  use host <- result.try(env.get_string("DB_HOST"))
-  use port <- result.try(env.get_int("DB_PORT"))
-  use ssl <- result.try(env.get_bool("DB_SSL"))
-  use user <- result.try(env.get_string("DB_USER"))
-  use password <- result.try(env.get_string("DB_PASSWORD"))
-  use ipversion <- result.try(env.get("DB_IP_VERSION", parse_ip_version))
+pub fn get_db_settings(path_option: Option(String)) {
+  let _ = case path_option {
+    Some(path) -> dotenv.load_from(path)
+    _ -> dotenv.load()
+  }
 
-  Ok(DbSettings(host, port, ssl, user, password, ipversion))
+  let db_name =
+    env.get_string("DB_NAME")
+    |> result.unwrap("chapp")
+
+  let host =
+    env.get_string("DB_HOST")
+    |> result.unwrap("localhost")
+
+  let port =
+    env.get_int("DB_PORT")
+    |> result.unwrap(5432)
+
+  let ssl =
+    env.get_bool("DB_SSL")
+    |> result.unwrap(False)
+
+  let user =
+    env.get_string("DB_USER")
+    |> result.unwrap("postgres")
+
+  let password =
+    env.get_string("DB_PASSWORD")
+    |> result.unwrap("postgres")
+
+  let ipversion =
+    env.get("DB_IP_VERSION", parse_ip_version)
+    |> result.unwrap(Ipv4)
+
+  DbSettings(db_name, host, port, ssl, user, password, ipversion)
 }
 
 fn parse_ip_version(str: String) -> Result(IpVersion, Nil) {

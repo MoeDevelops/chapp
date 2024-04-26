@@ -1,10 +1,11 @@
 import chapp/router
 import gleam/erlang/process
+import gleam/option.{None}
 import gleam/result
 import mist
 
 pub fn main() -> Result(Nil, Nil) {
-  use handler <- result.try(router.create_handler())
+  use handler <- result.try(router.create_handler(None))
 
   let assert Ok(_) =
     handler

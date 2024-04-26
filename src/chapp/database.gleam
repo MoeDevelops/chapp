@@ -4,7 +4,7 @@ import gleam/dynamic
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option.{Some}
+import gleam/option.{type Option, Some}
 import gleam/pgo.{
   type Connection as DbConnection, type QueryError, ConnectionUnavailable,
   ConstraintViolated, PostgresqlError, UnexpectedArgumentCount,
@@ -12,13 +12,13 @@ import gleam/pgo.{
 }
 import gleam/result
 
-pub fn create_connection(database: String) -> Result(DbConnection, Nil) {
-  use conf <- result.try(config.get_db_settings())
+pub fn create_connection(path: Option(String)) -> Result(DbConnection, Nil) {
+  let conf = config.get_db_settings(path)
 
   let connection =
     pgo.Config(
       ..pgo.default_config(),
-      database: database,
+      database: conf.db_name,
       host: conf.host,
       port: conf.port,
       ssl: conf.ssl,

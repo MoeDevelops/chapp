@@ -17,11 +17,10 @@ pub type Context {
   Context(db: DbConnection)
 }
 
-pub fn create_handler() -> Result(
-  fn(HttpRequest(Connection)) -> HttpResponse(ResponseData),
-  Nil,
-) {
-  use connection <- result.try(database.create_connection("chapp"))
+pub fn create_handler(
+  path: Option(String),
+) -> Result(fn(HttpRequest(Connection)) -> HttpResponse(ResponseData), Nil) {
+  use connection <- result.try(database.create_connection(path))
   let ctx = Context(connection)
 
   Ok(fn(req: HttpRequest(Connection)) { handle_request(req, ctx) })

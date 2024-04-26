@@ -27,13 +27,6 @@ jobs:
       - name: Install dependencies
         run: gleam deps download
       - name: Run unit tests
-        env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_SSL: False
-          DB_USER: postgres
-          DB_PASSWORD: postgres
-          DB_IP_VERSION: IPv4
         run: gleam test
       - name: Check format
         run: gleam format --check src test

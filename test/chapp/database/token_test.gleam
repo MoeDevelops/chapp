@@ -12,15 +12,16 @@ pub fn verify_token_test() {
   |> token.verify_token(connection, _)
   |> should.be_true()
 }
-// pub fn get_user_by_token_test() {
-//   let username = "Tester"
-//   let connection = setup()
 
-//   connection
-//   |> user.create_user(username, "securePw_123!")
-//   |> should.be_some()
-//   |> token.token()
-//   |> token.get_user_by_token(connection, _)
-//   |> should.be_some()
-//   |> should.equal(username)
-// }
+pub fn get_user_by_token_test() {
+  let username = "Tester"
+  let connection = setup()
+
+  connection
+  |> user.create_user(username, "securePw_123!")
+  |> should.be_some()
+  |> token.token()
+  |> token.get_user_by_token(connection, _)
+  |> should.be_some()
+  |> should.equal(username)
+}

@@ -61,7 +61,11 @@ pub fn get_user_by_token(
 
   case
     get_user_by_token_sql
-    |> pgo.execute(connection, [pgo.bytea(token_binary)], dynamic.string)
+    |> pgo.execute(
+      connection,
+      [pgo.bytea(token_binary)],
+      dynamic.element(0, dynamic.string),
+    )
   {
     Ok(db_result) ->
       case list.first(db_result.rows) {
