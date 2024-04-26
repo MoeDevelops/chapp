@@ -10,14 +10,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: alpine:edge
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Install packages
-        run: apk add --no-cache gleam rebar3 docker
-      - name: Start postgresql docker container
-        run: docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=chapp_test postgres
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup postgres
+        uses: ikalnytskyi/action-setup-postgres@v5
+        with:
+          database: chapp_test
+      - name: Setup BEAM
+        uses: erlef/setup-beam@v1.17.5
+        with:
+          otp-version: "26.0.2"
+          gleam-version: "1.1.0"
+          rebar3-version: "3"
       - name: Install dependencies
         run: gleam deps download
       - name: Run unit tests
