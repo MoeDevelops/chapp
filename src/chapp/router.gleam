@@ -21,6 +21,7 @@ pub fn create_handler(
   path: Option(String),
 ) -> Result(fn(HttpRequest(Connection)) -> HttpResponse(ResponseData), Nil) {
   use connection <- result.try(database.create_connection(path))
+  database.create_tables(connection)
   let ctx = Context(connection)
 
   Ok(fn(req: HttpRequest(Connection)) { handle_request(req, ctx) })
