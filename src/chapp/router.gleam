@@ -1,3 +1,5 @@
+import chapp/api/message
+import chapp/context.{type Context, Context}
 import chapp/database
 import gleam/erlang/process.{type Selector}
 import gleam/http/request.{type Request as HttpRequest}
@@ -5,17 +7,12 @@ import gleam/http/response.{type Response as HttpResponse}
 import gleam/io
 import gleam/option.{type Option, None}
 import gleam/otp/actor.{type Next, Continue}
-import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import mist.{
   type Connection, type ResponseData, type WebsocketConnection,
   type WebsocketMessage,
 }
 import wisp.{type Request, type Response}
-
-pub type Context {
-  Context(db: DbConnection)
-}
 
 pub fn create_handler(
   path: Option(String),
@@ -50,8 +47,9 @@ fn handle_websocket(
   mist.websocket(req, handle_ws_message, on_init, on_close)
 }
 
-fn handle_http_request(req: Request, _ctx: Context) -> Response {
+fn handle_http_request(req: Request, ctx: Context) -> Response {
   case wisp.path_segments(req) {
+    ["messages"] -> message.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }
