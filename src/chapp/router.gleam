@@ -1,3 +1,8 @@
+import chapp/api/login
+import chapp/api/message
+import chapp/api/register
+import chapp/api/user
+import chapp/context.{type Context, Context}
 import chapp/database
 import gleam/erlang/process.{type Selector}
 import gleam/http/request.{type Request as HttpRequest}
@@ -5,7 +10,6 @@ import gleam/http/response.{type Response as HttpResponse}
 import gleam/io
 import gleam/option.{type Option, None}
 import gleam/otp/actor.{type Next, Continue}
-import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import mist.{
   type Connection, type ResponseData, type WebsocketConnection,
@@ -13,14 +17,11 @@ import mist.{
 }
 import wisp.{type Request, type Response}
 
-pub type Context {
-  Context(db: DbConnection)
-}
-
 pub fn create_handler(
   path: Option(String),
 ) -> Result(fn(HttpRequest(Connection)) -> HttpResponse(ResponseData), Nil) {
   use connection <- result.try(database.create_connection(path))
+  database.create_tables(connection)
   let ctx = Context(connection)
 
   Ok(fn(req: HttpRequest(Connection)) { handle_request(req, ctx) })
@@ -50,8 +51,12 @@ fn handle_websocket(
   mist.websocket(req, handle_ws_message, on_init, on_close)
 }
 
-fn handle_http_request(req: Request, _ctx: Context) -> Response {
+fn handle_http_request(req: Request, ctx: Context) -> Response {
   case wisp.path_segments(req) {
+    ["messages"] -> message.handle_request(req, ctx)
+    ["register"] -> register.handle_request(req, ctx)
+    ["login"] -> login.handle_request(req, ctx)
+    ["user"] -> user.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }
