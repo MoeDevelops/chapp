@@ -1,13 +1,13 @@
-FROM erlang:latest
+FROM erlang:alpine
 
 WORKDIR /app
 
-ENV HOST=localhost
-ENV PORT=5432
-ENV SSL=False
-ENV USER=postgres
-ENV PASSWORD=example
-ENV IP_VERSION=IPv4
+ENV DB_HOST=localhost
+ENV DB_PORT=5432
+ENV DB_SSL=False
+ENV DB_USER=postgres
+ENV DB_PASSWORD=postgres
+ENV DB_IP_VERSION=IPv4
 
 COPY ./build/erlang-shipment .
 

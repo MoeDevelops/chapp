@@ -4,7 +4,9 @@ import chapp/api/register
 import chapp/api/user
 import chapp/context.{type Context, Context}
 import chapp/database
+import cors_builder as cors
 import gleam/erlang/process.{type Selector}
+import gleam/http.{Delete, Get, Post}
 import gleam/http/request.{type Request as HttpRequest}
 import gleam/http/response.{type Response as HttpResponse}
 import gleam/io
@@ -52,6 +54,7 @@ fn handle_websocket(
 }
 
 fn handle_http_request(req: Request, ctx: Context) -> Response {
+  use req <- cors.wisp_handle(req, get_cors())
   case wisp.path_segments(req) {
     ["messages"] -> message.handle_request(req, ctx)
     ["register"] -> register.handle_request(req, ctx)
@@ -59,6 +62,14 @@ fn handle_http_request(req: Request, ctx: Context) -> Response {
     ["user"] -> user.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
+}
+
+fn get_cors() {
+  cors.new()
+  |> cors.allow_origin("*")
+  |> cors.allow_method(Get)
+  |> cors.allow_method(Post)
+  |> cors.allow_method(Delete)
 }
 
 fn on_init(
