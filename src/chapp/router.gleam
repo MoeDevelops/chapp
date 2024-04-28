@@ -55,6 +55,7 @@ fn handle_websocket(
 
 fn handle_http_request(req: Request, ctx: Context) -> Response {
   use req <- cors.wisp_handle(req, get_cors())
+  use <- wisp.log_request(req)
   case wisp.path_segments(req) {
     ["messages"] -> message.handle_request(req, ctx)
     ["register"] -> register.handle_request(req, ctx)
@@ -66,10 +67,11 @@ fn handle_http_request(req: Request, ctx: Context) -> Response {
 
 fn get_cors() {
   cors.new()
-  |> cors.allow_origin("*")
+  |> cors.allow_all_origins()
   |> cors.allow_method(Get)
   |> cors.allow_method(Post)
   |> cors.allow_method(Delete)
+  |> cors.allow_header("content-type")
 }
 
 fn on_init(
