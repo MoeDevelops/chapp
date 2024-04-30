@@ -2,6 +2,7 @@ import chapp/api/login
 import chapp/api/message
 import chapp/api/register
 import chapp/api/user
+import chapp/api/user_by_token
 import chapp/context.{type Context, Context}
 import chapp/database
 import cors_builder as cors
@@ -61,6 +62,7 @@ fn handle_http_request(req: Request, ctx: Context) -> Response {
     ["register"] -> register.handle_request(req, ctx)
     ["login"] -> login.handle_request(req, ctx)
     ["user"] -> user.handle_request(req, ctx)
+    ["userByToken"] -> user_by_token.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }
