@@ -1,7 +1,7 @@
 import chapp/database/message
-import chapp/database/token.{type TokenPair}
 import chapp/database/user
 import chapp/database_test.{setup}
+import chapp/models.{type TokenPair}
 import gleam/list
 import gleam/pgo.{type Connection as DbConnection}
 import gleeunit/should

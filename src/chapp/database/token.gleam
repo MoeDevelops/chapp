@@ -1,16 +1,14 @@
 import chapp/database
+import chapp/models.{type TokenPair, type User, TokenPair, User}
 import gleam/bit_array
 import gleam/bytes_builder
 import gleam/dynamic
 import gleam/list
+import gleam/pair
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import gleam/string
 import youid/uuid
-
-pub type TokenPair {
-  TokenPair(username: String, token: String)
-}
 
 pub fn create_token_pair(
   connection: DbConnection,
@@ -47,7 +45,7 @@ pub fn verify_token(connection: DbConnection, token_pair: TokenPair) -> Bool {
 pub fn get_user_by_token(
   connection: DbConnection,
   token: String,
-) -> Result(String, Nil) {
+) -> Result(User, Nil) {
   let token_binary =
     token
     |> string.replace("-", "")
@@ -63,10 +61,14 @@ pub fn get_user_by_token(
     |> pgo.execute(
       connection,
       [pgo.bytea(token_binary)],
-      dynamic.element(0, dynamic.string),
+      dynamic.tuple2(dynamic.string, dynamic.int),
     )
   {
-    Ok(db_result) -> list.first(db_result.rows)
+    Ok(db_result) ->
+      case list.first(db_result.rows) {
+        Ok(row) -> Ok(User(pair.first(row), pair.second(row)))
+        Error(_) -> Error(Nil)
+      }
     Error(err) -> {
       database.log_error(err)
       Error(Nil)
@@ -92,8 +94,9 @@ limit 1;
 "
 
 const get_user_by_token_sql = "
-select username
-from tokens
-where token = $1
+select u.username, u.creation_timestamp
+from tokens t
+inner join users u on t.username = u.username
+where t.token = $1
 limit 1;
 "

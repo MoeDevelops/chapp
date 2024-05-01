@@ -34,11 +34,14 @@ pub fn get_user_by_token_test() {
   let username = "Tester"
   let connection = setup()
 
-  connection
-  |> user.create_user(username, "securePw_123!")
-  |> should.be_ok()
-  |> token.token()
-  |> token.get_user_by_token(connection, _)
-  |> should.be_ok()
+  let user =
+    connection
+    |> user.create_user(username, "securePw_123!")
+    |> should.be_ok()
+    |> token.token()
+    |> token.get_user_by_token(connection, _)
+    |> should.be_ok()
+
+  user.username
   |> should.equal(username)
 }

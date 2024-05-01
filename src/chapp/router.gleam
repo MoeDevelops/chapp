@@ -2,12 +2,13 @@ import chapp/api/login
 import chapp/api/message
 import chapp/api/register
 import chapp/api/user
+import chapp/api/user_by_name
 import chapp/api/user_by_token
 import chapp/context.{type Context, Context}
 import chapp/database
 import cors_builder as cors
 import gleam/erlang/process.{type Selector}
-import gleam/http.{Delete, Get, Post}
+import gleam/http.{Delete, Get, Options, Post}
 import gleam/http/request.{type Request as HttpRequest}
 import gleam/http/response.{type Response as HttpResponse}
 import gleam/io
@@ -62,7 +63,8 @@ fn handle_http_request(req: Request, ctx: Context) -> Response {
     ["register"] -> register.handle_request(req, ctx)
     ["login"] -> login.handle_request(req, ctx)
     ["user"] -> user.handle_request(req, ctx)
-    ["userByToken"] -> user_by_token.handle_request(req, ctx)
+    ["user", username] -> user_by_name.handle_request(req, ctx, username)
+    ["token"] -> user_by_token.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }
@@ -73,7 +75,9 @@ fn get_cors() {
   |> cors.allow_method(Get)
   |> cors.allow_method(Post)
   |> cors.allow_method(Delete)
+  |> cors.allow_method(Options)
   |> cors.allow_header("content-type")
+  |> cors.allow_header("token")
 }
 
 fn on_init(

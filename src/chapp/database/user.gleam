@@ -1,5 +1,6 @@
 import chapp/database
-import chapp/database/token.{type TokenPair}
+import chapp/database/token
+import chapp/models.{type TokenPair, type User, TokenPair, User}
 import gleam/bit_array
 import gleam/crypto.{Sha512}
 import gleam/dynamic
@@ -7,10 +8,6 @@ import gleam/list
 import gleam/pair
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
-
-pub type User {
-  User(username: String, creation_timestamp: Int)
-}
 
 pub fn create_user(
   connection: DbConnection,
@@ -111,10 +108,10 @@ pub fn delete_user(
   let user = token.get_user_by_token(connection, token)
 
   case user {
-    Ok(username) -> {
+    Ok(user) -> {
       case
         delete_user_sql
-        |> pgo.execute(connection, [pgo.text(username)], dynamic.dynamic)
+        |> pgo.execute(connection, [pgo.text(user.username)], dynamic.dynamic)
       {
         Ok(_) -> Ok(Nil)
         Error(err) -> {

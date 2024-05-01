@@ -1,25 +1,20 @@
 import chapp/api
+import chapp/api/user.{user_to_json}
 import chapp/context.{type Context}
 import chapp/database/token
-import gleam/dynamic
-import gleam/http.{Post}
+import gleam/http.{Get}
 import gleam/json
 import wisp.{type Request, type Response}
 
 pub fn handle_request(req: Request, ctx: Context) -> Response {
   case req.method {
-    Post -> get_user_by_token(req, ctx)
-    _ -> wisp.method_not_allowed([Post])
+    Get -> get_user_by_token(req, ctx)
+    _ -> wisp.method_not_allowed([Get])
   }
 }
 
 pub fn get_user_by_token(req: Request, ctx: Context) -> Response {
-  use json <- wisp.require_json(req)
-
-  use token <- api.try(
-    dynamic.decode1(fn(x) { x }, dynamic.field("token", dynamic.string))(json),
-    wisp.unprocessable_entity,
-  )
+  use token <- api.try(api.get_token(req), fn() { wisp.response(401) })
 
   use user <- api.try(
     ctx.db
@@ -27,7 +22,7 @@ pub fn get_user_by_token(req: Request, ctx: Context) -> Response {
     wisp.internal_server_error,
   )
 
-  json.object([#("username", json.string(user))])
+  user_to_json(user)
   |> json.to_string_builder()
   |> wisp.json_response(200)
 }

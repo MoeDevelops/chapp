@@ -1,21 +1,12 @@
 import chapp/database
 import chapp/database/token
+import chapp/models.{type Message, Message}
 import gleam/bit_array
 import gleam/dynamic
 import gleam/list
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import youid/uuid
-
-pub type Message {
-  Message(
-    id: String,
-    author: String,
-    recipient: String,
-    message_content: String,
-    creation_timestamp: Int,
-  )
-}
 
 pub fn create_message(
   connection: DbConnection,
@@ -34,7 +25,7 @@ pub fn create_message(
       connection,
       [
         pgo.text(id),
-        pgo.text(author),
+        pgo.text(author.username),
         pgo.text(recipient),
         pgo.text(content),
         pgo.int(timestamp),
@@ -42,7 +33,7 @@ pub fn create_message(
       dynamic.dynamic,
     )
   {
-    Ok(_) -> Ok(Message(id, author, recipient, content, timestamp))
+    Ok(_) -> Ok(Message(id, author.username, recipient, content, timestamp))
     Error(err) -> {
       database.log_error(err)
       Error(Nil)
@@ -61,7 +52,7 @@ pub fn get_messages(
     get_messages_sql
     |> pgo.execute(
       connection,
-      [pgo.text(requesting_user), pgo.text(user)],
+      [pgo.text(requesting_user.username), pgo.text(user)],
       dynamic.tuple5(
         dynamic.bit_array,
         dynamic.string,
