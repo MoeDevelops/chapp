@@ -1,3 +1,4 @@
+import chapp/api/chats
 import chapp/api/login
 import chapp/api/message
 import chapp/api/register
@@ -65,6 +66,7 @@ fn handle_http_request(req: Request, ctx: Context) -> Response {
     ["user"] -> user.handle_request(req, ctx)
     ["user", username] -> user_by_name.handle_request(req, ctx, username)
     ["token"] -> user_by_token.handle_request(req, ctx)
+    ["chats"] -> chats.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }
