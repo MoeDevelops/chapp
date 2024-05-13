@@ -43,15 +43,17 @@ pub fn create_tables(connection: DbConnection) -> Bool {
 
 fn manage_create_tables(connection: DbConnection) -> Result(Nil, QueryError) {
   let r = dynamic.dynamic
-  use _ <- result.try(pgo.execute(create_table_users_sql, connection, [], r))
-  use _ <- result.try(pgo.execute(create_table_messages_sql, connection, [], r))
-  use _ <- result.try(pgo.execute(create_table_tokens_sql, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_users, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_chats, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_users_chats, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_messages, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_tokens, connection, [], r))
   Ok(Nil)
 }
 
 pub fn drop_tables(connection: DbConnection) -> Bool {
   case
-    drop_tables_sql
+    drop_all_tables
     |> pgo.execute(connection, [], dynamic.dynamic)
   {
     Ok(_) -> True
@@ -95,27 +97,43 @@ pub fn get_timestamp() -> Int {
   |> birl.to_unix()
 }
 
-const create_table_users_sql = "
-create table if not exists users 
-(username varchar(32) primary key, password bytea,
-salt bytea, creation_timestamp bigint);
+const create_table_users = "
+create table if not exists users (
+id uuid primary key, 
+username varchar(32), 
+password bytea,
+salt bytea, 
+created_at bigint);
 "
 
-const create_table_messages_sql = "
-create table if not exists messages
-(id uuid primary key, 
-author varchar(32) references Users(username) ON DELETE CASCADE,
-recipient varchar(32) references Users(username) ON DELETE CASCADE, 
-message_content varchar(1000), creation_timestamp bigint);
+const create_table_chats = "
+create table if not exists chats (
+id uuid primary key,
+name varchar(32));
 "
 
-const create_table_tokens_sql = "
-create table if not exists tokens
-(token uuid primary key,
-username varchar(32) references users(username) ON DELETE CASCADE,
-creation_timestamp bigint);
+const create_table_users_chats = "
+create table if not exists users_chats (
+user_id uuid references users(id), 
+chat_id uuid references chats(id),
+primary key(user_id, chat_id));
 "
 
-const drop_tables_sql = "
-drop table if exists users, messages, tokens;
+const create_table_messages = "
+create table if not exists messages (
+id uuid primary key,
+author_id uuid references users(id) on delete cascade,
+message_content varchar(1000), 
+created_at bigint);
+"
+
+const create_table_tokens = "
+create table if not exists tokens (
+token uuid primary key,
+user_id uuid references users(id) on delete cascade,
+created_at bigint);
+"
+
+const drop_all_tables = "
+drop table if exists users, chats, users_chats, messages, tokens;
 "
