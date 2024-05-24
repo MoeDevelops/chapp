@@ -1,7 +1,7 @@
 import chapp/api
 import chapp/context.{type Context}
 import chapp/database/message
-import chapp/models.{type Message}
+import chapp/models
 import gleam/dynamic
 import gleam/http.{Get, Post}
 import gleam/json
@@ -14,16 +14,6 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
     Post -> post_message(req, ctx)
     _ -> wisp.method_not_allowed([Get, Post])
   }
-}
-
-fn message_to_json(message: Message) {
-  json.object([
-    #("id", json.string(message.id)),
-    #("author", json.string(message.author)),
-    #("recipient", json.string(message.recipient)),
-    #("message_content", json.string(message.message_content)),
-    #("creation_timestamp", json.int(message.creation_timestamp)),
-  ])
 }
 
 type IncomingMessage {
@@ -53,7 +43,7 @@ fn post_message(req: Request, ctx: Context) -> Response {
     wisp.internal_server_error,
   )
 
-  message_to_json(new_message)
+  models.message_to_json(new_message)
   |> json.to_string_builder()
   |> wisp.json_response(201)
 }
@@ -74,7 +64,7 @@ fn get_messages(req: Request, ctx: Context) -> Response {
   )
 
   messages
-  |> list.map(message_to_json)
+  |> list.map(models.message_to_json)
   |> json.array(fn(x) { x })
   |> json.to_string_builder()
   |> wisp.json_response(200)

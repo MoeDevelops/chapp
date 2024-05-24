@@ -11,7 +11,7 @@ import youid/uuid
 pub fn create_message(
   connection: DbConnection,
   token: String,
-  recipient: String,
+  chat_id: String,
   content: String,
 ) -> Result(Message, Nil) {
   let id = uuid.v4_string()
@@ -26,18 +26,15 @@ pub fn create_message(
       [
         pgo.text(id),
         pgo.text(author.username),
-        pgo.text(recipient),
+        pgo.text(chat_id),
         pgo.text(content),
         pgo.int(timestamp),
       ],
       dynamic.dynamic,
     )
   {
-    Ok(_) -> Ok(Message(id, author.username, recipient, content, timestamp))
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Ok(_) -> Ok(Message(id, author.username, chat_id, content, timestamp))
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -66,10 +63,7 @@ pub fn get_messages(
       db_result.rows
       |> list.map(decode_message)
       |> Ok
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -103,10 +97,7 @@ pub fn get_chats(
     )
   {
     Ok(db_result) -> Ok(db_result.rows)
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 

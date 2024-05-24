@@ -35,7 +35,7 @@ pub fn create_tables(connection: DbConnection) -> Bool {
   case manage_create_tables(connection) {
     Ok(_) -> True
     Error(err) -> {
-      log_error(err)
+      let _ = log_error(err)
       False
     }
   }
@@ -58,13 +58,13 @@ pub fn drop_tables(connection: DbConnection) -> Bool {
   {
     Ok(_) -> True
     Error(err) -> {
-      log_error(err)
+      let _ = log_error(err)
       False
     }
   }
 }
 
-pub fn log_error(error: QueryError) -> Nil {
+pub fn log_error(error: QueryError) -> Result(a, Nil) {
   case error {
     ConstraintViolated(message, contraint, detail) ->
       io.println(
@@ -90,6 +90,8 @@ pub fn log_error(error: QueryError) -> Nil {
     }
     ConnectionUnavailable -> io.println("Connection is not available")
   }
+
+  Error(Nil)
 }
 
 pub fn get_timestamp() -> Int {
@@ -109,7 +111,8 @@ created_at bigint);
 const create_table_chats = "
 create table if not exists chats (
 id uuid primary key,
-name varchar(32));
+name varchar(32)
+created_at bigint);
 "
 
 const create_table_users_chats = "
@@ -122,8 +125,9 @@ primary key(user_id, chat_id));
 const create_table_messages = "
 create table if not exists messages (
 id uuid primary key,
-author_id uuid references users(id) on delete cascade,
-message_content varchar(1000), 
+user_id uuid references users(id) on delete cascade,
+chat_id uuid references chats(id) on delete cascade,
+content varchar(1000), 
 created_at bigint);
 "
 

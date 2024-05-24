@@ -5,9 +5,9 @@ import gleam/bit_array
 import gleam/crypto.{Sha512}
 import gleam/dynamic
 import gleam/list
-import gleam/pair
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
+import youid/uuid
 
 pub fn create_user(
   connection: DbConnection,
@@ -19,11 +19,14 @@ pub fn create_user(
 
   let pw_hashed = hash_password(password_bin, salt)
 
+  let id = uuid.v4_string()
+
   let db_result =
     create_user_sql
     |> pgo.execute(
       connection,
       [
+        pgo.text(id),
         pgo.text(username),
         pgo.bytea(pw_hashed),
         pgo.bytea(salt),
@@ -34,10 +37,7 @@ pub fn create_user(
 
   case db_result {
     Ok(_) -> Ok(token.create_token_pair(connection, username))
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -74,10 +74,7 @@ pub fn login(
           )
         False -> Error(Nil)
       }
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -94,10 +91,7 @@ fn get_salt(connection: DbConnection, username: String) -> Result(BitArray, Nil)
       db_result.rows
       |> list.first
 
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -115,7 +109,7 @@ pub fn delete_user(
       {
         Ok(_) -> Ok(Nil)
         Error(err) -> {
-          database.log_error(err)
+          let _ = database.log_error(err)
           Error("Error during database execution")
         }
       }
@@ -130,7 +124,7 @@ pub fn get_user(connection: DbConnection, username: String) -> Result(User, Nil)
     |> pgo.execute(
       connection,
       [pgo.text(username)],
-      dynamic.tuple2(dynamic.string, dynamic.int),
+      dynamic.tuple3(dynamic.string, dynamic.string, dynamic.int),
     )
   {
     Ok(db_result) -> {
@@ -138,14 +132,14 @@ pub fn get_user(connection: DbConnection, username: String) -> Result(User, Nil)
         db_result.rows
         |> list.first()
       {
-        Ok(row) -> Ok(User(pair.first(row), pair.second(row)))
+        Ok(row) ->
+          case row {
+            #(id, username, created_at) -> Ok(User(id, username, created_at))
+          }
         _ -> Error(Nil)
       }
     }
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -157,8 +151,8 @@ where username = $1 and password = $2 and salt = $3
 
 const create_user_sql = "
 insert into 
-users (username, password, salt, creation_timestamp) 
-values ($1, $2, $3, $4);
+users (id, username, password, salt, created_at) 
+values ($1, $2, $3, $4, $5);
 "
 
 const get_salt_sql = "
@@ -169,7 +163,7 @@ limit 1;
 "
 
 const get_user_sql = "
-select username, creation_timestamp
+select username, created_at
 from users
 where username = $1
 limit 1;

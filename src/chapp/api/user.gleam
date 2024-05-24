@@ -17,7 +17,7 @@ pub fn handle_request(req: Request, ctx: Context) -> Response {
 pub fn user_to_json(user: User) {
   json.object([
     #("username", json.string(user.username)),
-    #("creation_timestamp", json.int(user.creation_timestamp)),
+    #("creation_timestamp", json.int(user.created_at)),
   ])
 }
 

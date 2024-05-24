@@ -4,7 +4,6 @@ import gleam/bit_array
 import gleam/bytes_builder
 import gleam/dynamic
 import gleam/list
-import gleam/pair
 import gleam/pgo.{type Connection as DbConnection}
 import gleam/result
 import gleam/string
@@ -36,7 +35,7 @@ pub fn verify_token(connection: DbConnection, token_pair: TokenPair) -> Bool {
   {
     Ok(db_result) -> db_result.count == 1
     Error(err) -> {
-      database.log_error(err)
+      let _ = database.log_error(err)
       False
     }
   }
@@ -61,18 +60,18 @@ pub fn get_user_by_token(
     |> pgo.execute(
       connection,
       [pgo.bytea(token_binary)],
-      dynamic.tuple2(dynamic.string, dynamic.int),
+      dynamic.tuple3(dynamic.string, dynamic.string, dynamic.int),
     )
   {
     Ok(db_result) ->
       case list.first(db_result.rows) {
-        Ok(row) -> Ok(User(pair.first(row), pair.second(row)))
+        Ok(row) ->
+          case row {
+            #(id, username, created_at) -> Ok(User(id, username, created_at))
+          }
         Error(_) -> Error(Nil)
       }
-    Error(err) -> {
-      database.log_error(err)
-      Error(Nil)
-    }
+    Error(err) -> database.log_error(err)
   }
 }
 
@@ -94,7 +93,7 @@ limit 1;
 "
 
 const get_user_by_token_sql = "
-select u.username, u.creation_timestamp
+select u.id, u.username, u.creation_timestamp
 from tokens t
 inner join users u on t.username = u.username
 where t.token = $1
