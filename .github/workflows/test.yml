@@ -16,7 +16,7 @@ jobs:
         with:
           database: chapp_test
       - name: Setup BEAM
-        uses: erlef/setup-beam@v1.17.5
+        uses: erlef/setup-beam@v1
         with:
           otp-version: "26.0.2"
           gleam-version: "1.2.0-rc"
