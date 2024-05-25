@@ -2,9 +2,6 @@ name: test
 
 on:
   push:
-    branches:
-      - main
-      - development
   pull_request:
 
 jobs:
@@ -22,7 +19,7 @@ jobs:
         uses: erlef/setup-beam@v1.17.5
         with:
           otp-version: "26.0.2"
-          gleam-version: "1.1.0"
+          gleam-version: "1.2.0-rc"
           rebar3-version: "3"
       - name: Install dependencies
         run: gleam deps download

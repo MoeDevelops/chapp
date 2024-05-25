@@ -1,6 +1,6 @@
 import chapp/database/token
 import chapp/database/user
-import chapp/database_test.{setup}
+import chapp_test/database_test.{setup}
 import gleeunit/should
 
 pub fn create_user_test() {
@@ -33,7 +33,7 @@ pub fn delete_user_test() {
   connection
   |> user.create_user(username, password)
   |> should.be_ok()
-  |> token.token()
+  |> token.user_id()
   |> user.delete_user(connection, _)
   |> should.be_ok()
 
@@ -42,7 +42,7 @@ pub fn delete_user_test() {
   |> should.be_error()
 }
 
-pub fn get_user_test() {
+pub fn get_user_by_username_test() {
   let username = "Tester"
   let password = "securePw_1234444!"
 
@@ -53,6 +53,6 @@ pub fn get_user_test() {
   |> should.be_ok()
 
   connection
-  |> user.get_user(username)
+  |> user.get_user_by_username(username)
   |> should.be_ok()
 }

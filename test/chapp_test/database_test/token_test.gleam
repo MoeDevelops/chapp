@@ -1,6 +1,6 @@
 import chapp/database/token
 import chapp/database/user
-import chapp/database_test.{setup}
+import chapp_test/database_test.{setup}
 import gleeunit/should
 
 pub fn create_token_pair_test() {
@@ -14,8 +14,14 @@ pub fn create_token_pair_test() {
   |> token.verify_token(connection, _)
   |> should.be_true()
 
+  let user =
+    connection
+    |> user.get_user_by_username(username)
+    |> should.be_ok()
+
   connection
-  |> token.create_token_pair(username)
+  |> token.create_token_pair(user.id)
+  |> should.be_ok()
   |> token.verify_token(connection, _)
   |> should.be_true()
 }

@@ -84,39 +84,15 @@ fn decode_message(args: #(BitArray, String, String, String, Int)) -> Message {
   }
 }
 
-pub fn get_chats(
-  connection: DbConnection,
-  username: String,
-) -> Result(List(String), Nil) {
-  case
-    get_chats_sql
-    |> pgo.execute(
-      connection,
-      [pgo.text(username)],
-      dynamic.element(0, dynamic.string),
-    )
-  {
-    Ok(db_result) -> Ok(db_result.rows)
-    Error(err) -> database.log_error(err)
-  }
-}
-
 const create_message_sql = "
 insert into
-messages (id, author, recipient, message_content, creation_timestamp)
+messages (id, user_id, chat_id, content, created_at)
 values ($1, $2, $3, $4, $5)"
 
 const get_messages_sql = "
-select id, author, recipient, message_content, creation_timestamp
+select id, user_id, chat_id, content, created_at
 from messages
-where author = $1 and recipient = $2 or author = $2 and recipient = $1
+where chat_id = $1
 order by creation_timestamp desc
-limit 500;
-"
-
-const get_chats_sql = "
-select distinct recipient
-from messages
-where author = $1
 limit 500;
 "

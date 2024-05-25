@@ -36,7 +36,7 @@ fn post_user(req: Request, ctx: Context) -> Response {
   )
 
   json.object([
-    #("username", json.string(new_token_pair.username)),
+    #("user_id", json.string(new_token_pair.user_id)),
     #("token", json.string(new_token_pair.token)),
   ])
   |> json.to_string_builder()

@@ -16,7 +16,7 @@ pub fn handle_request(req: Request, ctx: Context, username: String) -> Response 
 fn get_user(ctx: Context, username: String) -> Response {
   use user <- api.try(
     ctx.db
-      |> user.get_user(username),
+      |> user.get_user_by_username(username),
     wisp.not_found,
   )
 

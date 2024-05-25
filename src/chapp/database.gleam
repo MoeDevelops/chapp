@@ -84,7 +84,7 @@ pub fn log_error(error: QueryError) -> Result(a, Nil) {
     UnexpectedResultType(decode_errors) -> {
       io.println("UnexpectedResultType")
       list.each(decode_errors, fn(x) {
-        io.println(x.expected <> x.found)
+        io.println("Expected: " <> x.expected <> " Found: " <> x.found)
         list.each(x.path, io.println)
       })
     }
@@ -101,23 +101,23 @@ pub fn get_timestamp() -> Int {
 
 const create_table_users = "
 create table if not exists users (
-id uuid primary key, 
-username varchar(32), 
+id uuid primary key,
+username varchar(32),
 password bytea,
-salt bytea, 
+salt bytea,
 created_at bigint);
 "
 
 const create_table_chats = "
 create table if not exists chats (
 id uuid primary key,
-name varchar(32)
+name varchar(32),
 created_at bigint);
 "
 
 const create_table_users_chats = "
 create table if not exists users_chats (
-user_id uuid references users(id), 
+user_id uuid references users(id),
 chat_id uuid references chats(id),
 primary key(user_id, chat_id));
 "
@@ -127,7 +127,7 @@ create table if not exists messages (
 id uuid primary key,
 user_id uuid references users(id) on delete cascade,
 chat_id uuid references chats(id) on delete cascade,
-content varchar(1000), 
+content varchar(1000),
 created_at bigint);
 "
 

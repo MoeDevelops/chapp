@@ -3,7 +3,7 @@ import gleam/json.{type Json}
 // - TokenPair -
 
 pub type TokenPair {
-  TokenPair(username: String, token: String)
+  TokenPair(user_id: String, token: String)
 }
 
 // - User -

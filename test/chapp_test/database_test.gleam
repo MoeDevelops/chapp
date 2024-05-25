@@ -17,3 +17,7 @@ pub fn setup() -> DbConnection {
 
   connection
 }
+
+pub fn setup_test() {
+  setup()
+}
