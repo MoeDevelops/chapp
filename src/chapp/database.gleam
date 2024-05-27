@@ -1,16 +1,19 @@
 import birl
 import chapp/config
+import gleam/bit_array
 import gleam/dynamic
 import gleam/int
 import gleam/io
 import gleam/list
 import gleam/option.{type Option, Some}
 import gleam/pgo.{
-  type Connection as DbConnection, type QueryError, ConnectionUnavailable,
-  ConstraintViolated, PostgresqlError, UnexpectedArgumentCount,
-  UnexpectedArgumentType, UnexpectedResultType,
+  type Connection as DbConnection, type QueryError, type Returned,
+  ConnectionUnavailable, ConstraintViolated, PostgresqlError,
+  UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
 }
 import gleam/result
+import gleam/string
+import youid/uuid.{type Uuid}
 
 pub fn create_connection(path: Option(String)) -> Result(DbConnection, Nil) {
   let conf = config.get_db_settings(path)
@@ -45,7 +48,7 @@ fn manage_create_tables(connection: DbConnection) -> Result(Nil, QueryError) {
   let r = dynamic.dynamic
   use _ <- result.try(pgo.execute(create_table_users, connection, [], r))
   use _ <- result.try(pgo.execute(create_table_chats, connection, [], r))
-  use _ <- result.try(pgo.execute(create_table_users_chats, connection, [], r))
+  use _ <- result.try(pgo.execute(create_table_chats_users, connection, [], r))
   use _ <- result.try(pgo.execute(create_table_messages, connection, [], r))
   use _ <- result.try(pgo.execute(create_table_tokens, connection, [], r))
   Ok(Nil)
@@ -94,6 +97,30 @@ pub fn log_error(error: QueryError) -> Result(a, Nil) {
   Error(Nil)
 }
 
+pub fn try_log_error(
+  db_result: Result(Returned(a), QueryError),
+  error_value: b,
+  apply: fn(Returned(a)) -> Result(c, b),
+) -> Result(c, b) {
+  case db_result {
+    Ok(val) -> apply(val)
+    Error(err) -> {
+      let _ = log_error(err)
+      Error(error_value)
+    }
+  }
+}
+
+pub fn id_to_bit_array(uuid: Uuid) -> BitArray {
+  let assert Ok(bits) =
+    uuid
+    |> uuid.to_string()
+    |> string.replace("-", "")
+    |> bit_array.base16_decode()
+
+  bits
+}
+
 pub fn get_timestamp() -> Int {
   birl.utc_now()
   |> birl.to_unix()
@@ -115,8 +142,8 @@ name varchar(32),
 created_at bigint);
 "
 
-const create_table_users_chats = "
-create table if not exists users_chats (
+const create_table_chats_users = "
+create table if not exists chats_users (
 user_id uuid references users(id),
 chat_id uuid references chats(id),
 primary key(user_id, chat_id));
@@ -139,5 +166,5 @@ created_at bigint);
 "
 
 const drop_all_tables = "
-drop table if exists users, chats, users_chats, messages, tokens;
+drop table if exists users, chats, chats_users, messages, tokens;
 "
