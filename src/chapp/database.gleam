@@ -121,6 +121,12 @@ pub fn id_to_bit_array(uuid: Uuid) -> BitArray {
   bits
 }
 
+pub fn bit_array_to_id(bits: BitArray) -> Result(Uuid, Nil) {
+  bits
+  |> bit_array.base16_encode
+  |> uuid.from_string()
+}
+
 pub fn get_timestamp() -> Int {
   birl.utc_now()
   |> birl.to_unix()

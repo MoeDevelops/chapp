@@ -21,7 +21,7 @@ pub fn add_user_to_chat_test() {
   connection
   |> chat_user.add_user_to_chat(
     chat.id |> uuid.from_string() |> should.be_ok(),
-    user.user_id |> uuid.from_string() |> should.be_ok(),
+    user.id |> uuid.from_string() |> should.be_ok(),
   )
   |> should.be_ok()
 }
