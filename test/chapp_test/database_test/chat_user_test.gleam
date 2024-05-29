@@ -3,7 +3,6 @@ import chapp/database/chat_user
 import chapp/database/user
 import chapp_test/database_test.{setup}
 import gleeunit/should
-import youid/uuid
 
 pub fn add_user_to_chat_test() {
   let connection = setup()
@@ -19,9 +18,6 @@ pub fn add_user_to_chat_test() {
     |> should.be_ok()
 
   connection
-  |> chat_user.add_user_to_chat(
-    chat.id |> uuid.from_string() |> should.be_ok(),
-    user.id |> uuid.from_string() |> should.be_ok(),
-  )
+  |> chat_user.add_user_to_chat(chat.id, user.id)
   |> should.be_ok()
 }

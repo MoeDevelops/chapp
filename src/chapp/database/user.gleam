@@ -29,7 +29,7 @@ pub fn create_user(
       |> pgo.execute(
         connection,
         [
-          pgo.bytea(database.id_to_bit_array(id)),
+          pgo.bytea(uuid.to_bit_array(id)),
           pgo.text(username),
           pgo.bytea(pw_hashed),
           pgo.bytea(salt),
@@ -68,7 +68,7 @@ pub fn get_user_id_by_auth(
   case db_result.rows |> list.first() {
     Ok(#(id, pw_hash, salt)) -> {
       case hash_password(password, salt) == pw_hash {
-        True -> id |> database.bit_array_to_id()
+        True -> uuid.from_bit_array(id)
         _ -> Error(Nil)
       }
     }
@@ -82,10 +82,14 @@ from users
 where id = $1;
 "
 
-pub fn delete_user(connection: DbConnection, id: String) -> Result(Nil, String) {
+pub fn delete_user(connection: DbConnection, id: Uuid) -> Result(Nil, String) {
   case
     delete_user_sql
-    |> pgo.execute(connection, [pgo.text(id)], dynamic.dynamic)
+    |> pgo.execute(
+      connection,
+      [pgo.bytea(uuid.to_bit_array(id))],
+      dynamic.dynamic,
+    )
   {
     Ok(_) -> Ok(Nil)
     Error(err) -> {
@@ -122,7 +126,7 @@ pub fn get_user_by_username(
         Ok(#(id, username, created_at)) ->
           Ok(User(
             {
-              let assert Ok(user_id) = id |> database.bit_array_to_id()
+              let assert Ok(user_id) = uuid.from_bit_array(id)
               user_id
             },
             username,

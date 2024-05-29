@@ -1,10 +1,10 @@
-import chapp/api/chats
-import chapp/api/login
-import chapp/api/message
-import chapp/api/register
-import chapp/api/user
-import chapp/api/user_by_name
-import chapp/api/user_by_token
+// import chapp/api/chats
+// import chapp/api/login
+// import chapp/api/message
+// import chapp/api/register
+// import chapp/api/user
+// import chapp/api/user_by_name
+// import chapp/api/user_by_token
 import chapp/context.{type Context, Context}
 import chapp/database
 import cors_builder as cors
@@ -56,17 +56,17 @@ fn handle_websocket(
   mist.websocket(req, handle_ws_message, on_init, on_close)
 }
 
-fn handle_http_request(req: Request, ctx: Context) -> Response {
+fn handle_http_request(req: Request, _ctx: Context) -> Response {
   use req <- cors.wisp_handle(req, get_cors())
   use <- wisp.log_request(req)
   case wisp.path_segments(req) {
-    ["messages"] -> message.handle_request(req, ctx)
-    ["register"] -> register.handle_request(req, ctx)
-    ["login"] -> login.handle_request(req, ctx)
-    ["user"] -> user.handle_request(req, ctx)
-    ["user", username] -> user_by_name.handle_request(req, ctx, username)
-    ["token"] -> user_by_token.handle_request(req, ctx)
-    ["chats"] -> chats.handle_request(req, ctx)
+    // ["messages"] -> message.handle_request(req, ctx)
+    // ["register"] -> register.handle_request(req, ctx)
+    // ["login"] -> login.handle_request(req, ctx)
+    // ["user"] -> user.handle_request(req, ctx)
+    // ["user", username] -> user_by_name.handle_request(req, ctx, username)
+    // ["token"] -> user_by_token.handle_request(req, ctx)
+    // ["chats"] -> chats.handle_request(req, ctx)
     _ -> wisp.not_found()
   }
 }

@@ -1,6 +1,5 @@
 import birl
 import chapp/config
-import gleam/bit_array
 import gleam/dynamic
 import gleam/int
 import gleam/io
@@ -12,8 +11,6 @@ import gleam/pgo.{
   UnexpectedArgumentCount, UnexpectedArgumentType, UnexpectedResultType,
 }
 import gleam/result
-import gleam/string
-import youid/uuid.{type Uuid}
 
 pub fn create_connection(path: Option(String)) -> Result(DbConnection, Nil) {
   let conf = config.get_db_settings(path)
@@ -109,22 +106,6 @@ pub fn try_log_error(
       Error(error_value)
     }
   }
-}
-
-pub fn id_to_bit_array(uuid: Uuid) -> BitArray {
-  let assert Ok(bits) =
-    uuid
-    |> uuid.to_string()
-    |> string.replace("-", "")
-    |> bit_array.base16_decode()
-
-  bits
-}
-
-pub fn bit_array_to_id(bits: BitArray) -> Result(Uuid, Nil) {
-  bits
-  |> bit_array.base16_encode
-  |> uuid.from_string()
 }
 
 pub fn get_timestamp() -> Int {

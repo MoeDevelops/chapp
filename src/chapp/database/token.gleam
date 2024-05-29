@@ -23,8 +23,8 @@ pub fn create_token(
       create_token_sql,
       connection,
       [
-        pgo.bytea(token |> database.id_to_bit_array()),
-        pgo.bytea(user_id |> database.id_to_bit_array()),
+        pgo.bytea(uuid.to_bit_array(token)),
+        pgo.bytea(uuid.to_bit_array(user_id)),
         pgo.int(created_at),
       ],
       dynamic.dynamic,
@@ -51,8 +51,8 @@ pub fn verify_token(
       verify_token_sql,
       connection,
       [
-        pgo.bytea(user_id |> database.id_to_bit_array()),
-        pgo.bytea(token |> database.id_to_bit_array()),
+        pgo.bytea(uuid.to_bit_array(user_id)),
+        pgo.bytea(uuid.to_bit_array(token)),
       ],
       dynamic.dynamic,
     ),
@@ -61,7 +61,7 @@ pub fn verify_token(
 
   case db_result.rows |> list.is_empty {
     True -> Error(Nil)
-    False -> Error(Nil)
+    False -> Ok(Nil)
   }
 }
 
@@ -81,7 +81,7 @@ pub fn get_user_by_token(
     pgo.execute(
       get_user_by_token_sql,
       connection,
-      [pgo.bytea(token |> database.id_to_bit_array)],
+      [pgo.bytea(uuid.to_bit_array(token))],
       dynamic.tuple3(dynamic.bit_array, dynamic.string, dynamic.int),
     ),
     Nil,
@@ -91,7 +91,7 @@ pub fn get_user_by_token(
     Ok(#(id, username, created_at)) ->
       Ok(User(
         {
-          let assert Ok(uuid) = id |> database.bit_array_to_id()
+          let assert Ok(uuid) = uuid.from_bit_array(id)
           uuid
         },
         username,

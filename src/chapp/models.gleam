@@ -20,8 +20,8 @@ pub fn user_to_json(user: User) -> Json {
 pub type Message {
   Message(
     id: Uuid,
-    user_id: String,
-    chat_id: String,
+    user_id: Uuid,
+    chat_id: Uuid,
     content: String,
     created_at: Int,
   )
@@ -29,9 +29,9 @@ pub type Message {
 
 pub fn message_to_json(message: Message) -> Json {
   json.object([
-    #("id", json.string(message.id |> uuid.to_string())),
-    #("user_id", json.string(message.user_id)),
-    #("chat_id", json.string(message.chat_id)),
+    #("id", json.string(uuid.to_string(message.id))),
+    #("user_id", json.string(uuid.to_string(message.user_id))),
+    #("chat_id", json.string(uuid.to_string(message.chat_id))),
     #("content", json.string(message.content)),
     #("created_at", json.int(message.created_at)),
   ])

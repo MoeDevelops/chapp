@@ -1,6 +1,5 @@
 import chapp/database
 import chapp/models.{type Chat, Chat}
-import gleam/bit_array
 import gleam/dynamic
 import gleam/list
 import gleam/pgo.{type Connection as DbConnection}
@@ -22,8 +21,8 @@ pub fn add_user_to_chat(
       add_user_to_chat_sql,
       connection,
       [
-        pgo.bytea(database.id_to_bit_array(chat_id)),
-        pgo.bytea(database.id_to_bit_array(user_id)),
+        pgo.bytea(uuid.to_bit_array(chat_id)),
+        pgo.bytea(uuid.to_bit_array(user_id)),
       ],
       dynamic.dynamic,
     ),
@@ -50,7 +49,7 @@ pub fn get_chats_by_user_id(
     pgo.execute(
       get_chats_by_user_id_sql,
       connection,
-      [pgo.bytea(database.id_to_bit_array(user_id))],
+      [pgo.bytea(uuid.to_bit_array(user_id))],
       dynamic.tuple3(dynamic.bit_array, dynamic.string, dynamic.int),
     ),
     Nil,
@@ -60,7 +59,14 @@ pub fn get_chats_by_user_id(
     db_result.rows
     |> list.map(fn(tp) {
       let #(id, name, created_at) = tp
-      Chat(id |> bit_array.base16_encode(), name, created_at)
+      Chat(
+        {
+          let assert Ok(id) = uuid.from_bit_array(id)
+          id
+        },
+        name,
+        created_at,
+      )
     }),
   )
 }

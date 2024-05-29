@@ -1,4 +1,3 @@
-import chapp/database/token
 import chapp/database/user
 import chapp_test/database_test.{setup}
 import gleeunit/should
@@ -15,13 +14,15 @@ pub fn login_test() {
 
   let connection = setup()
 
-  connection
-  |> user.create_user(username, password)
-  |> should.be_ok()
+  let user =
+    connection
+    |> user.create_user(username, password)
+    |> should.be_ok()
 
   connection
-  |> user.login(username, password)
+  |> user.get_user_id_by_auth(username, password)
   |> should.be_ok()
+  |> should.equal(user.id)
 }
 
 pub fn delete_user_test() {
@@ -30,15 +31,17 @@ pub fn delete_user_test() {
 
   let connection = setup()
 
+  let user =
+    connection
+    |> user.create_user(username, password)
+    |> should.be_ok()
+
   connection
-  |> user.create_user(username, password)
-  |> should.be_ok()
-  |> token.user_id()
-  |> user.delete_user(connection, _)
+  |> user.delete_user(user.id)
   |> should.be_ok()
 
   connection
-  |> user.login(username, password)
+  |> user.get_user_id_by_auth(username, password)
   |> should.be_error()
 }
 
