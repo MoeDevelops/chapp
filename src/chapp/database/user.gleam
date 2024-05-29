@@ -1,101 +1,86 @@
 import chapp/database
-import chapp/database/token
-import chapp/models.{type TokenPair, type User, TokenPair, User}
+import chapp/models.{type User, User}
 import gleam/bit_array
 import gleam/crypto.{Sha512}
 import gleam/dynamic
-
 import gleam/list
 import gleam/pgo.{type Connection as DbConnection}
-import gleam/result
-import gleam/string
-import youid/uuid
+import youid/uuid.{type Uuid}
+
+const create_user_sql = "
+insert into
+users (id, username, password, salt, created_at)
+values ($1, $2, $3, $4, $5);
+"
 
 pub fn create_user(
   connection: DbConnection,
   username: String,
   password: String,
-) -> Result(TokenPair, Nil) {
+) -> Result(User, Nil) {
   let salt = crypto.strong_random_bytes(64)
   let password_bin = bit_array.from_string(password)
   let pw_hashed = hash_password(password_bin, salt)
+  let id = uuid.v4()
+  let created_at = database.get_timestamp()
 
-  let id =
-    uuid.v4()
-    |> uuid.to_string()
-
-  let db_result =
+  use _ <- database.try_log_error(
     create_user_sql
-    |> pgo.execute(
-      connection,
-      [
-        pgo.bytea({
-          let assert Ok(bits) =
-            id
-            |> string.replace("-", "")
-            |> bit_array.base16_decode()
-          bits
-        }),
-        pgo.text(username),
-        pgo.bytea(pw_hashed),
-        pgo.bytea(salt),
-        pgo.int(database.get_timestamp()),
-      ],
-      dynamic.dynamic,
-    )
+      |> pgo.execute(
+        connection,
+        [
+          pgo.bytea(database.id_to_bit_array(id)),
+          pgo.text(username),
+          pgo.bytea(pw_hashed),
+          pgo.bytea(salt),
+          pgo.int(created_at),
+        ],
+        dynamic.dynamic,
+      ),
+    Nil,
+  )
 
-  case db_result {
-    Ok(_) -> token.create_token_pair(connection, id)
-    Error(err) -> database.log_error(err)
-  }
+  Ok(User(id, username, created_at))
 }
 
-pub fn login(
+const verify_user_sql = "
+select id, password, salt
+from users
+where username = $1;
+"
+
+pub fn get_user_id_by_auth(
   connection: DbConnection,
   username: String,
   password: String,
-) -> Result(TokenPair, Nil) {
-  use user <- result.try(get_user_by_username(connection, username))
-  use salt <- result.try(get_salt(connection, user.id))
-  let password_bin = bit_array.from_string(password)
-  let hashed_pw = hash_password(password_bin, salt)
-
-  case
-    login_sql
-    |> pgo.execute(
+) -> Result(Uuid, Nil) {
+  let password = bit_array.from_string(password)
+  use db_result <- database.try_log_error(
+    pgo.execute(
+      verify_user_sql,
       connection,
-      [pgo.text(username), pgo.bytea(hashed_pw), pgo.bytea(salt)],
-      dynamic.element(0, dynamic.bit_array),
-    )
-  {
-    Ok(db_result) ->
-      case db_result.rows |> list.first() {
-        Ok(id) -> {
-          connection
-          |> token.create_token_pair(id |> bit_array.base16_encode())
-        }
-        Error(_) -> Error(Nil)
+      [pgo.text(username)],
+      dynamic.tuple3(dynamic.bit_array, dynamic.bit_array, dynamic.bit_array),
+    ),
+    Nil,
+  )
+
+  case db_result.rows |> list.first() {
+    Ok(#(id, pw_hash, salt)) -> {
+      case hash_password(password, salt) == pw_hash {
+        True -> id |> database.bit_array_to_id()
+        _ -> Error(Nil)
       }
-    Error(err) -> database.log_error(err)
+    }
+    _ -> Error(Nil)
   }
 }
 
-fn get_salt(connection: DbConnection, id: String) -> Result(BitArray, Nil) {
-  case
-    get_salt_sql
-    |> pgo.execute(
-      connection,
-      [pgo.text(id)],
-      dynamic.element(0, dynamic.bit_array),
-    )
-  {
-    Ok(db_result) ->
-      db_result.rows
-      |> list.first
-
-    Error(err) -> database.log_error(err)
-  }
-}
+const delete_user_sql = "
+delete
+from users
+where id = $1;
+"
 
 pub fn delete_user(connection: DbConnection, id: String) -> Result(Nil, String) {
   case
@@ -109,6 +94,13 @@ pub fn delete_user(connection: DbConnection, id: String) -> Result(Nil, String) 
     }
   }
 }
+
+const get_user_by_username_sql = "
+select id, username, created_at
+from users
+where username = $1
+limit 1;
+"
 
 pub fn get_user_by_username(
   connection: DbConnection,
@@ -128,7 +120,14 @@ pub fn get_user_by_username(
         |> list.first()
       {
         Ok(#(id, username, created_at)) ->
-          Ok(User(id |> bit_array.base16_encode(), username, created_at))
+          Ok(User(
+            {
+              let assert Ok(user_id) = id |> database.bit_array_to_id()
+              user_id
+            },
+            username,
+            created_at,
+          ))
         _ -> Error(Nil)
       }
     }
@@ -141,35 +140,3 @@ fn hash_password(password: BitArray, salt: BitArray) -> BitArray {
 
   crypto.hash(Sha512, pw_and_salt)
 }
-
-const login_sql = "
-select id
-from users
-where username = $1 and password = $2 and salt = $3
-"
-
-const create_user_sql = "
-insert into
-users (id, username, password, salt, created_at)
-values ($1, $2, $3, $4, $5);
-"
-
-const get_salt_sql = "
-select salt
-from users
-where id = $1
-limit 1;
-"
-
-const get_user_by_username_sql = "
-select id, username, created_at
-from users
-where username = $1
-limit 1;
-"
-
-const delete_user_sql = "
-delete
-from users
-where id = $1;
-"

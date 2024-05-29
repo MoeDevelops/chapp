@@ -8,9 +8,12 @@ pub fn create_token_pair_test() {
   let password = "Passworrrdddd123123"
   let connection = setup()
 
-  connection
-  |> user.create_user(username, password)
-  |> should.be_ok()
+  let user =
+    connection
+    |> user.create_user(username, password)
+    |> should.be_ok()
+
+  token
   |> token.verify_token(connection, _)
   |> should.be_true()
 
