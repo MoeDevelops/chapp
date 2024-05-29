@@ -5,7 +5,6 @@ import chapp/database/user
 import gleam/dynamic
 import gleam/http.{Post}
 import gleam/json
-import gleam/result
 import wisp.{type Request, type Response}
 import youid/uuid
 
@@ -32,22 +31,21 @@ fn post_user(req: Request, ctx: Context) -> Response {
     wisp.unprocessable_entity,
   )
 
-  use token <- api.try(
-    {
-      use user_id <- result.try(
-        ctx.db
-        |> user.get_user_id_by_auth(
-          incoming_user.username,
-          incoming_user.password,
-        ),
-      )
-
-      token.create_token(ctx.db, user_id)
-    },
+  use user_id <- api.try(
+    user.get_user_id_by_auth(
+      ctx.db,
+      incoming_user.username,
+      incoming_user.password,
+    ),
     wisp.internal_server_error,
   )
 
-  json.object([#("token", json.string(token |> uuid.to_string()))])
+  use token <- api.try(
+    token.create_token(ctx.db, user_id),
+    wisp.internal_server_error,
+  )
+
+  json.object([#("token", json.string(uuid.to_string(token)))])
   |> json.to_string_builder()
   |> wisp.json_response(201)
 }

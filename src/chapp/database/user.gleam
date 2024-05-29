@@ -82,21 +82,18 @@ from users
 where id = $1;
 "
 
-pub fn delete_user(connection: DbConnection, id: Uuid) -> Result(Nil, String) {
-  case
-    delete_user_sql
-    |> pgo.execute(
+pub fn delete_user(connection: DbConnection, id: Uuid) -> Result(Nil, Nil) {
+  use _ <- database.try_log_error(
+    pgo.execute(
+      delete_user_sql,
       connection,
       [pgo.bytea(uuid.to_bit_array(id))],
       dynamic.dynamic,
-    )
-  {
-    Ok(_) -> Ok(Nil)
-    Error(err) -> {
-      let _ = database.log_error(err)
-      Error("Error during database execution")
-    }
-  }
+    ),
+    Nil,
+  )
+
+  Ok(Nil)
 }
 
 const get_user_by_username_sql = "

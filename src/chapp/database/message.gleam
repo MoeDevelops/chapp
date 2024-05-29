@@ -1,9 +1,7 @@
 import chapp/database
-import chapp/database/token
 import chapp/models.{type Message, Message}
 import gleam/dynamic
 import gleam/pgo.{type Connection as DbConnection}
-import gleam/result
 import youid/uuid.{type Uuid}
 
 const create_message_sql = "
@@ -13,30 +11,73 @@ values ($1, $2, $3, $4, $5)"
 
 pub fn create_message(
   connection: DbConnection,
-  token: Uuid,
+  user_id: Uuid,
   chat_id: Uuid,
   content: String,
 ) -> Result(Message, Nil) {
   let id = uuid.v4()
-  use author <- result.try(token.get_user_by_token(connection, token))
+  let created_at = database.get_timestamp()
 
-  let timestamp = database.get_timestamp()
-
-  case
-    create_message_sql
-    |> pgo.execute(
+  use _ <- database.try_log_error(
+    pgo.execute(
+      create_message_sql,
       connection,
       [
         pgo.bytea(uuid.to_bit_array(id)),
-        pgo.text(author.username),
+        pgo.bytea(uuid.to_bit_array(user_id)),
         pgo.bytea(uuid.to_bit_array(chat_id)),
         pgo.text(content),
-        pgo.int(timestamp),
+        pgo.int(created_at),
       ],
       dynamic.dynamic,
-    )
-  {
-    Ok(_) -> Ok(Message(id, author.id, chat_id, content, timestamp))
-    Error(err) -> database.log_error(err)
+    ),
+    Nil,
+  )
+
+  Ok(Message(id, user_id, chat_id, content, created_at))
+}
+
+const get_message_by_id_sql = "
+select user_id, chat_id, content, created_at
+from messages
+where id = $1
+limit 1;
+"
+
+pub fn get_message_by_id(
+  connection: DbConnection,
+  id: Uuid,
+) -> Result(Message, Nil) {
+  use db_result <- database.try_log_error(
+    pgo.execute(
+      get_message_by_id_sql,
+      connection,
+      [pgo.bytea(uuid.to_bit_array(id))],
+      dynamic.tuple4(
+        dynamic.field("user_id", dynamic.bit_array),
+        dynamic.field("chat_id", dynamic.bit_array),
+        dynamic.field("content", dynamic.string),
+        dynamic.field("created_at", dynamic.int),
+      ),
+    ),
+    Nil,
+  )
+
+  case db_result.rows {
+    [#(user_id, chat_id, content, created_at), ..] ->
+      Ok(Message(
+        id,
+        {
+          let assert Ok(user_id) = uuid.from_bit_array(user_id)
+          user_id
+        },
+        {
+          let assert Ok(chat_id) = uuid.from_bit_array(chat_id)
+          chat_id
+        },
+        content,
+        created_at,
+      ))
+    _ -> Error(Nil)
   }
 }
